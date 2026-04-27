@@ -8,6 +8,9 @@ type LeadFormProps = {
   source: string;
 };
 
+const leadEndpoint = process.env.NEXT_PUBLIC_LEAD_ENDPOINT ?? "/api/leads";
+const isStaticDemo = process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
+
 export function LeadForm({ compact = false, source }: LeadFormProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
@@ -21,7 +24,14 @@ export function LeadForm({ compact = false, source }: LeadFormProps) {
     const formData = new FormData(form);
 
     try {
-      const response = await fetch("/api/leads", {
+      if (isStaticDemo && leadEndpoint === "/api/leads") {
+        await new Promise((resolve) => window.setTimeout(resolve, 400));
+        setStatus("success");
+        form.reset();
+        return;
+      }
+
+      const response = await fetch(leadEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
